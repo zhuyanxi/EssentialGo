@@ -33,10 +33,8 @@ func main() {
 
 	// testBoring2()
 
-	ch := make(chan int)
-	select {
-	case <-ch:
-	}
+	testFakeSearch()
+	// testFirstSearch()
 }
 
 func produceInts() {
@@ -79,6 +77,7 @@ func doPerson(p Person) {
 	fmt.Println("Current Person is:", p)
 }
 
+// Person :
 type Person struct {
 	Name string
 	Desc string
