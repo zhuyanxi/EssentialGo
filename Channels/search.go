@@ -62,7 +62,7 @@ func google3(query string) (results []Result) {
 		c <- video(query)
 	}()
 
-	timeout := time.After(80 * time.Millisecond)
+	timeout := time.After(90 * time.Millisecond)
 	for i := 0; i < 3; i++ {
 		select {
 		case result := <-c:
