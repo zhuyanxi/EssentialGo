@@ -1,31 +1,44 @@
 package main
 
 import (
-	"flag"
+	"bytes"
 	"fmt"
+	"log"
+	"os/exec"
+	"sync/atomic"
+	"time"
 )
-
-var (
-	flagHelp bool
-	flagEcho string
-)
-
-func parseCmdLineFlags() {
-	//flag.BoolVar(&flagHelp, "help", false, "if true, show help")
-	flag.StringVar(&flagEcho, "echo", "", "echo somethin")
-	flag.Parse()
-}
 
 func main() {
-	parseCmdLineFlags()
-	// if flagHelp {
-	// 	flag.Usage()
-	// 	os.Exit(0)
-	// }
-	// fmt.Printf("flag -echo: '%s'\n", flagEcho)
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("go", "version")
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 
-	remainingArgs := flag.Args()
-	for _, arg := range remainingArgs {
-		fmt.Printf("Remainig arg: '%s'\n", arg)
+	err := cmd.Start()
+	if err != nil {
+		log.Fatalf("cmd.Start() failed with '%s'\n", err)
 	}
+
+	var timedOut int32
+	timeout := 1 * time.Millisecond
+	stopTimer := time.AfterFunc(timeout, func() {
+		cmd.Process.Kill()
+		atomic.StoreInt32(&timedOut, 1)
+	})
+
+	err = cmd.Wait()
+	stopTimer.Stop()
+	didTimeout := atomic.LoadInt32(&timedOut) != 0
+	if didTimeout {
+		fmt.Printf("didTimeout: %v, err: %v\n", didTimeout, err)
+		return
+	}
+
+	// err = cmd.Wait()
+	// if err != nil {
+	// 	log.Fatalf("cmd.Wait() failed with '%s'\n", err)
+	// }
+	out := append(stdout.Bytes(), stderr.Bytes()...)
+	fmt.Printf("Output:\n%s\n", string(out))
 }
