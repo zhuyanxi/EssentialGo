@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 	"strconv"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -33,8 +36,28 @@ func main() {
 
 	// testBoring2()
 
-	testFakeSearch()
+	// testFakeSearch()
 	// testFirstSearch()
+
+	ch := make(chan int)
+	go func() {
+		for i := 0; ; i++ {
+			ch <- i * 3
+		}
+	}()
+	go func() {
+		for i := 0; ; i++ {
+			ch <- i * 5
+		}
+	}()
+	go func() {
+		for v := range ch {
+			fmt.Println(v)
+		}
+	}()
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+	fmt.Printf("quit (%v)\n", <-sig)
 }
 
 func produceInts() {
